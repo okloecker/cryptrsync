@@ -4,7 +4,7 @@ set -o errexit
 
 # Assistant for cryptrsync.sh that reads the command line parameters from a
 # configuration file ($HOME/.config/cryptrsync/autostarts
-# Config file must have 5 elements:
+# Config file must have 5 elements (N.B. no whitespace before or after semicolon!):
 # <id>;<method>;<plaindir>;<cryptdir>;<url>
 #
 # Example config entries:
