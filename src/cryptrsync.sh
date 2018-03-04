@@ -112,7 +112,6 @@ lock() {
   eval "exec $fd>$lock_file"
 
   # acquier the lock
-  #flock --wait $LOCKWAIT $fd \
   flock $fd \
     && return 0 \
     || return 1
@@ -183,7 +182,6 @@ main() {
   while true ; do
     sleep $delay
 
-#    echo_log " [$$] checking ${id} ${plaindir}"
     sync
 
   done
