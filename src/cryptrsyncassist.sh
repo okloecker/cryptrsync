@@ -49,13 +49,13 @@ loadConfig() {
     while read line || [[ -n "$line" ]]; do
       IFS=\; read id method ldir sdir rurl <<< "${line}"
 
+      # ignore lines starting with "#"
+      [ "${id#"#"}" != "${id}" ] && continue
+
       if [ -z "${id}" ] || [ -z "${method}" ] || [ -z "${ldir}" ] || [ -z "${sdir}" ] || [ -z "${rurl}" ] ; then
         echo_log ""  "============ incorrect config file in line ${lineNo}"
         exit 1
       fi
-
-      # ignore lines starting with "#"
-      [ ${id#"#"} != ${id} ] && continue
 
       ids[${id}]="${id}"
       methods[${id}]="${method}"

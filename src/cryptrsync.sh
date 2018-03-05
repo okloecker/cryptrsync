@@ -37,10 +37,10 @@ function echo_log {
 }
 
 alert(){
-   notify-send -u critical -t $popupduration " cryptrsync  `$DATE`   ${@}  "
+   notify-send -t $popupduration " cryptrsync  `$DATE`   ${@}  "
 }
 alert_fail(){
-   notify-send -u critical -t $popupduration " cryptrsync  `$DATE`   ${@}  " --icon=${icon}
+   notify-send -t $popupduration " cryptrsync  `$DATE`   ${@}  " --icon=${icon}
 }
 
 parseoptions() {
