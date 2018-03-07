@@ -15,6 +15,7 @@ set -o errexit
 # --plaindir=<unencrypted dir> --syncdir=<encrypted dir> --url=<rsync or rclone url>
 # --log=<logfile>
 
+readonly ignore="\.~lock\..*#|\.sw?|~$|4913"
 readonly rclone=`which rclone`
 rcloneopts="-v --stats=20s"
 rsyncopts="--archive --stats --delete --progress"
@@ -144,6 +145,10 @@ sync () {
 
   lock changesfile || echo_log "Can\'t lock in while"
   if [ $force = 1 ] || [ -s ${changedfile} ] ; then
+    # sleep a little more between noticing changes and syncing to give processes
+    # a chance to finish writing
+    sleep $delay
+
     sort ${changedfile} | uniq | while read f ; do 
       echo_log "============ SYNCING $f"
     done
@@ -165,7 +170,6 @@ main() {
   parseoptions $@
 
   readonly icon=/usr/share/icons/Adwaita/256x256/status/dialog-error.png
-  readonly ignore="\.~lock\.|\.sw.?|~$"
   readonly changedfile=`mktemp --suffix=_${id}_sync`
   readonly waitpidfile=`mktemp --suffix=_${id}_sync`
 
