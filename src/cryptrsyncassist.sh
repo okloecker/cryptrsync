@@ -39,7 +39,7 @@ LOG=${configdir}/log
 logdir=`dirname "${LOG}"`
 function echo_log {
   local f=${LOG}_${1}
-  echo `$DATE`" $2" |tee -a ${f}
+  echo -e `$DATE`" $2" |tee -a ${f}
 }
 
 loadConfig() {
@@ -152,7 +152,7 @@ main() {
     local url=${urls[${id}]}
     if [ "${id}" = "${idtosync}" ] ; then
       #mountgocrypt ${id}
-      echo_log ""  "===== Calling syncdir.sh for [$id]"
+      echo_log ""  "\e[1m===== Calling syncdir.sh for [$id]\e[0m"
       ${cryptrsyncprog} ${dryrun} --id="${id}" --method="${method}" --plaindir="${plaindir}" --syncdir="${syncdir}" --url="${url}" --log=${LOG}_${id}
     fi
 

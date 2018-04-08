@@ -18,7 +18,7 @@ set -o errexit
 readonly ignore="\.~lock\..*#|\.sw?|~$|4913"
 readonly rclone=`which rclone`
 rcloneopts="-v --stats=20s"
-rsyncopts="--archive --stats --delete --progress"
+rsyncopts="--archive --stats --delete --progress --human-readable --human-readable --compress --update"
 readonly delay="15s"
 readonly popupduration=5000
 readonly configdir=$HOME/.config/cryptrsync
@@ -34,14 +34,14 @@ url=${4}
 use_rclone=0
 
 function echo_log {
-  echo `$DATE`" $1" |tee -a ${LOG}
+  echo -e `$DATE`" $1" |tee -a ${LOG}
 }
 
 alert(){
-   notify-send -t $popupduration " cryptrsync  `$DATE`   ${@}  "
+   notify-send -t $popupduration " 🔒 cryptrsync  `$DATE`   ${@}  "
 }
 alert_fail(){
-   notify-send -t $popupduration " cryptrsync  `$DATE`   ${@}  " --icon=${icon}
+   notify-send -t $popupduration " 🔒 cryptrsync  `$DATE`   ${@}  " --icon=${icon}
 }
 
 parseoptions() {
@@ -155,10 +155,10 @@ sync () {
 
     echo_log "......................................................."
     if [ $use_rclone = 1 ] ; then
-      echo_log "============ CALLING rclone"
+      echo_log "\e[1m ============ CALLING rclone\e[0m"
       ${rclone} sync ${rcloneopts} "${syncdir}" "${url}" 2>&1 | tee -a "${LOG}" &&  alert "OK ${id}" || alert_fail "ERR ${id}" | tee -a "${LOG}"
     else
-      echo_log "============ CALLING rsync at with options ${rsyncopts}"
+      echo_log "\e[1m============ CALLING rsync at with options ${rsyncopts}\e[0m"
       rsync ${rsyncopts} ${syncdir}/ "${url}" 2>&1 | tee -a "${LOG}" && alert "OK ${id}" || alert_fail "ERR ${id}"
     fi
     rm -f ${changedfile}
