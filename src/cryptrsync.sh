@@ -18,8 +18,8 @@ set -o errexit
 readonly ignore="\.~lock\..*#|\.sw?|~$|4913"
 readonly rclone=`which rclone`
 rcloneopts="-v --stats=20s"
-rsyncopts="--archive --stats --delete --progress --human-readable --human-readable --compress --update"
-readonly delay="15s"
+rsyncopts="--archive --stats --delete --progress --human-readable --compress --update"
+readonly delay="15"
 readonly popupduration=5000
 readonly configdir=$HOME/.config/cryptrsync
 readonly DATE='date +%Y-%m-%d_%H:%M:%S'
@@ -37,11 +37,18 @@ function echo_log {
   echo -e `$DATE`" $1" |tee -a ${LOG}
 }
 
+function visualsleep {
+  echo "Waiting $1 secs"
+  for i in `seq $1` ; do
+    echo -n . ; sleep 1
+  done
+}
+
 alert(){
-   notify-send -t $popupduration " 🔒 cryptrsync  `$DATE`   ${@}  "
+   notify-send -t $popupduration " 🔒  ${@}   `$DATE`  cryptrsync "
 }
 alert_fail(){
-   notify-send -t $popupduration " 🔒 cryptrsync  `$DATE`   ${@}  " --icon=${icon}
+   notify-send -t $popupduration " 🔒  ${@}   `$DATE`  cryptrsync " --icon=${icon}
 }
 
 parseoptions() {
@@ -147,7 +154,7 @@ sync () {
   if [ $force = 1 ] || [ -s ${changedfile} ] ; then
     # sleep a little more between noticing changes and syncing to give processes
     # a chance to finish writing
-    sleep $delay
+    visualsleep $delay
 
     sort ${changedfile} | uniq | while read f ; do 
       echo_log "============ SYNCING $f"
@@ -184,7 +191,7 @@ main() {
   sync 1
 
   while true ; do
-    sleep $delay
+    sleep ${delay}s
 
     sync
 

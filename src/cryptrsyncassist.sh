@@ -101,6 +101,18 @@ parseoptions() {
      value=$( echo ${arg} | cut --delimiter== --fields=2- )
 
      case ${key} in
+         "-h")
+         ;&
+         "--help")
+          echo "Options: --dry-run"
+          echo "         --sync=<ID>"
+          echo "         --showconfig"
+          echo "         --log=<logfile>"
+          echo " any other option is interpreted as ID" 
+          echo " default logfile: ${LOG}"
+          exit 0
+         ;;
+
          "--dry-run")
            dryrun="--dry-run"
            ;;
@@ -115,8 +127,8 @@ parseoptions() {
            logdir=`dirname "${LOG}"`
            ;;
          *)
-          echo `date +"%Y-%m-%d %H:%M:%S"` "Unrecognised option ${key}"
-          exit 1
+          idtosync="${arg}"
+          ;;
      esac
   done
 }
@@ -125,11 +137,16 @@ main() {
   parseoptions $@
 
   [ -d "${logdir}" ] || mkdir "${logdir}"
+  if [ -z "${idtosync}" ] ; then
+    echo_log "" "\e[1m============ No ID supplied\e[0m"
+    exit 1
+  fi
 
   loadConfig 
+  echo_log "" "Log file: ${LOG}"
 
   if [ ${showconfig} = 1 ] ; then
-    echo `date +"%Y-%m-%d %H:%M:%S"` "============ Config:"
+    echo_log "" "============ Config:"
     for id in "${!ids[@]}"; do
       echo "[${id}]"
       echo "          Plain dir ${plaindirs[${id}]}"
@@ -141,7 +158,7 @@ main() {
   fi
 
   if [ -z "${ids[${idtosync}]:-""}" ] ; then
-    echo `date +"%Y-%m-%d %H:%M:%S"` No config for [$id] found
+    echo_log "" "\e[1m============ No config for [$idtosync] found\e[0m"
   fi
 
   for id in "${!ids[@]}"; do
