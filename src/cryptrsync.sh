@@ -19,7 +19,7 @@ readonly ignore="\.~lock\..*#|\.sw?|~$|4913"
 readonly rclone=`which rclone`
 rcloneopts="-v --stats=20s"
 rsyncopts="--archive --stats --delete --progress --human-readable --compress --update"
-readonly delay="15"
+readonly delay="1"
 readonly popupduration=5000
 readonly configdir=$HOME/.config/cryptrsync
 readonly DATE='date +%Y-%m-%d_%H:%M:%S'
@@ -34,7 +34,7 @@ url=${4}
 use_rclone=0
 
 function echo_log {
-  echo -e `$DATE`" $1" |tee -a ${LOG}
+  echo -e `$DATE`" [${id}] $1" |tee -a ${LOG}
 }
 
 function visualsleep {
@@ -166,7 +166,7 @@ sync () {
       ${rclone} sync ${rcloneopts} "${syncdir}" "${url}" 2>&1 | tee -a "${LOG}" &&  alert "OK ${id}" || alert_fail "ERR ${id}" | tee -a "${LOG}"
     else
       echo_log "\e[1m============ CALLING rsync at with options ${rsyncopts}\e[0m"
-      rsync ${rsyncopts} ${syncdir}/ "${url}" 2>&1 | tee -a "${LOG}" && alert "OK ${id}" || alert_fail "ERR ${id}"
+      rsync ${rsyncopts} ${syncdir}/ "${url}" 2>&1  && alert "OK ${id}" || alert_fail "ERR ${id}" | tee -a "${LOG}"
     fi
     rm -f ${changedfile}
   fi
@@ -191,10 +191,9 @@ main() {
   sync 1
 
   while true ; do
-    sleep ${delay}s
-
     sync
 
+    sleep ${delay}s
   done
 }
 
