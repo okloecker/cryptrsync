@@ -19,7 +19,7 @@ readonly ignore="\.~lock\..*#|\.sw?|~$|4913"
 readonly rclone=`which rclone`
 rcloneopts="-v --stats=20s"
 rsyncopts="--archive --stats --delete --progress --human-readable --compress --update"
-readonly delay="1"
+readonly delay="5"
 readonly popupduration=5000
 readonly configdir=$HOME/.config/cryptrsync
 readonly DATE='date +%Y-%m-%d_%H:%M:%S'
@@ -154,7 +154,7 @@ sync () {
   if [ $force = 1 ] || [ -s ${changedfile} ] ; then
     # sleep a little more between noticing changes and syncing to give processes
     # a chance to finish writing
-    visualsleep $delay
+    if [ $force = 0 ] ; then visualsleep $delay ; fi
 
     sort ${changedfile} | uniq | while read f ; do 
       echo_log "============ SYNCING $f"
