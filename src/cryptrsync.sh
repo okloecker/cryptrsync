@@ -20,6 +20,7 @@ readonly rclone=`which rclone`
 rcloneopts="-v --stats=20s"
 rsyncopts="--archive --stats --delete --progress --human-readable --compress --update"
 readonly delay="5"
+readonly delayAfterFail="30"
 readonly popupduration=5000
 readonly configdir=$HOME/.config/cryptrsync
 readonly DATE='date +%Y-%m-%d_%H:%M:%S'
@@ -29,6 +30,7 @@ method=${1}
 plaindir=${2}
 syncdir=${3}
 url=${4}
+dryrun=0
 
 # whether to use rclone (or rsync) (1=rclone, 0=rsync)
 use_rclone=0
@@ -69,7 +71,8 @@ parseoptions() {
           ;;
          "--dry-run")
            rcloneopts="${rcloneopts} --dry-run"
-           rsyncopts="${rsyncopts} --dry-run";;
+           rsyncopts="${rsyncopts} --dry-run"
+           dryrun=1;;
          "--plaindir")
            plaindir=${value};;
          "--syncdir")
@@ -161,13 +164,30 @@ sync () {
     done
 
     echo_log "......................................................."
+    [ $dryrun -eq 1 ] && echo_log "\e[1m ===== DRY RUN ===========\e[0m"
     if [ $use_rclone = 1 ] ; then
       echo_log "\e[1m ============ CALLING rclone\e[0m"
-      ${rclone} sync ${rcloneopts} "${syncdir}" "${url}" 2>&1 | tee -a "${LOG}" &&  alert "OK ${id}" || alert_fail "ERR ${id}" | tee -a "${LOG}"
+      cmd="${rclone} sync ${rcloneopts} ${syncdir} ${url}"
     else
       echo_log "\e[1m============ CALLING rsync at with options ${rsyncopts}\e[0m"
-      rsync ${rsyncopts} ${syncdir}/ "${url}" 2>&1  && alert "OK ${id}" || alert_fail "ERR ${id}" | tee -a "${LOG}"
+      cmd="rsync ${rsyncopts} ${syncdir}/ ${url}"
     fi
+
+    echo "cmd=${cmd}"
+
+    set +o errexit
+    ${cmd} 2>&1 ; rv=$?
+    set -o errexit
+    if test ${rv} -eq 0 ; then alert "OK ${id}" ; fi
+    while test ${rv} -ne 0 ; do  
+      alert_fail "ERR ${id}" | tee -a "${LOG}" 
+      echo_log "\e[1mrsync failed\e[0m"
+      visualsleep $delayAfterFail
+      set +o errexit
+      ${cmd} 2>&1 ; rv=$?
+      set -o errexit
+    done
+
     rm -f ${changedfile}
   fi
   unlock || echo_log "--- Couldn\'t remove lock"
