@@ -8,10 +8,10 @@ set -o errexit
 # inotifywait can't watch the encrypted view, only the original dir
 
 # call with parameters:
-# ./cryptrsync.sh 
-# [--id=<uniqueID>] 
+# ./cryptrsync.sh
+# [--id=<uniqueID>]
 # [--dry-run]
-# --method=<rsync|rclone> 
+# --method=<rsync|rclone>
 # --plaindir=<unencrypted dir> --syncdir=<encrypted dir> --url=<rsync or rclone url>
 # --log=<logfile>
 
@@ -96,7 +96,13 @@ mountgocrypt() {
   if [ ! -e "${syncdir}/gocryptfs.diriv" ] ; then
     echo_log "============ Reverse mounting crypted dir ${syncdir}"
     echo_log "Enter gocrypt password for ${plaindir} - ${syncdir}:"
-    gocryptfs -reverse -q "${plaindir}" "${syncdir}" 
+    if which secret-tool
+      then
+        extpass="secret-tool lookup gocryptfs password"
+        gocryptfs -extpass "${extpass}" -reverse -q "${plaindir}" "${syncdir}"
+      else
+        gocryptfs -reverse -q "${plaindir}" "${syncdir}"
+    fi
   else
     echo_log "============ Crypted dir already mounted: ${syncdir}"
   fi
@@ -142,7 +148,7 @@ readchanges () {
 }
 
 startinotifyw() {
-  ( inotifywait -m "${plaindir}" -r -e close_write,create,delete --format %w%f & echo $! >&3 ) 3>$waitpidfile | egrep --line-buffered -v ${ignore} | 
+  ( inotifywait -m "${plaindir}" -r -e close_write,create,delete --format %w%f & echo $! >&3 ) 3>$waitpidfile | egrep --line-buffered -v ${ignore} |
     while read f ; do readchanges "$f" ; done &
   waitpid=$(<$waitpidfile)
   echo_log "PID of inotifywait ${waitpid}"
@@ -151,7 +157,7 @@ startinotifyw() {
 }
 
 sync () {
-  local force=${1:-0} 
+  local force=${1:-0}
 
   lock changesfile || echo_log "Can\'t lock in while"
   if [ $force = 1 ] || [ -s ${changedfile} ] ; then
@@ -159,7 +165,7 @@ sync () {
     # a chance to finish writing
     if [ $force = 0 ] ; then visualsleep $delay ; fi
 
-    sort ${changedfile} | uniq | while read f ; do 
+    sort ${changedfile} | uniq | while read f ; do
       echo_log "============ SYNCING $f"
     done
 
@@ -167,6 +173,11 @@ sync () {
     [ $dryrun -eq 1 ] && echo_log "\e[1m ===== DRY RUN ===========\e[0m"
     if [ $use_rclone = 1 ] ; then
       echo_log "\e[1m ============ CALLING rclone\e[0m"
+      if which secret-tool ; then
+        # rclone will read RCLONE_CONFIG_PASS environment variable and use it
+        # for password if possible:
+        export RCLONE_CONFIG_PASS=`secret-tool lookup rclone config`
+      fi
       cmd="${rclone} sync ${rcloneopts} ${syncdir} ${url}"
     else
       echo_log "\e[1m============ CALLING rsync at with options ${rsyncopts}\e[0m"
@@ -179,8 +190,8 @@ sync () {
     ${cmd} 2>&1 ; rv=$?
     set -o errexit
     if test ${rv} -eq 0 ; then alert "OK ${id}" ; fi
-    while test ${rv} -ne 0 ; do  
-      alert_fail "ERR ${id}" | tee -a "${LOG}" 
+    while test ${rv} -ne 0 ; do
+      alert_fail "ERR ${id}" | tee -a "${LOG}"
       echo_log "\e[1mrsync failed\e[0m"
       visualsleep $delayAfterFail
       set +o errexit
