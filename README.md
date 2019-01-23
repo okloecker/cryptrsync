@@ -21,11 +21,15 @@ Enter command and arguments as-is because the script will lookup by the
 attributes and values.
 
 For gocryptfs
+
     $ secret-tool store --label=Cryptrsync gocryptfs password
 
 For rclone:
+
     $ secret-tool store --label=Cryptrsync rclone config 
 
 To verify the passwords, they will be printed in plain with these commands:
+
     $ secret-tool lookup gocryptfs password
+
     $ secret-tool lookup rclone config
