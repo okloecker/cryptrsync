@@ -99,6 +99,7 @@ mountgocrypt() {
     if which secret-tool
       then
         extpass="secret-tool lookup gocryptfs password"
+        if [ -z `${extpass}` ] ; then  echo_log "\e[31m ===== COULD NOT FIND GNOME-KEYRING PASSWORD ===========\e[0m" ; fi
         gocryptfs -extpass "${extpass}" -reverse -q "${plaindir}" "${syncdir}"
       else
         gocryptfs -reverse -q "${plaindir}" "${syncdir}"
@@ -177,6 +178,7 @@ sync () {
         # rclone will read RCLONE_CONFIG_PASS environment variable and use it
         # for password if possible:
         export RCLONE_CONFIG_PASS=`secret-tool lookup rclone config`
+        if [ -z "${RCLONE_CONFIG_PASS}" ] ; then  echo_log "\e[31m ===== COULD NOT FIND GNOME-KEYRING PASSWORD ===========\e[0m" ; fi
       fi
       cmd="${rclone} sync ${rcloneopts} ${syncdir} ${url}"
     else
