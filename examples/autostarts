@@ -1,0 +1,17 @@
+# example config file
+# lines starting with "#" are considered comments and are not counted when
+# reporting errors
+# Format:
+# <id>;<method:rsync|rclone>;<plaindir>;<cryptdir>;<url>
+# Description of entries:
+# 1: <id> is the label used by cryptrsyncassist.sh on the command line
+# 2: [rsync|rclone] is the method/executable to use (rclone or rsync)
+# 3: the local filesystem path where the unencrypted plaintext files are located
+# 4: the local filesystem path where the (gocryptfs) encrypted files are located
+# 5: the URL of the remote system, be it in rsync format or rclone
+#    e.g. in <username>:gocrypt/foo_gocrypt, <username> is the name defined
+#    in rclone config for this remote,
+#    "gocrypt/" is a top directory in google drive,
+#    "/foo_gocrypt" is the remote copy of the local dir from (4)
+blah;rsync;/home/<user>/blahdir_plain;/home/<user>/tmp/syncdirtest_crypt;<user@example.com>:<remotedir>
+foo;rclone;/home/<user>/foodir;/home/<user>/.foodir_gocrypt;<username>:gocrypt/foodir_gocrypt
