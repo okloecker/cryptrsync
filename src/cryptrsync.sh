@@ -192,6 +192,7 @@ sync () {
     ${cmd} 2>&1 ; rv=$?
     set -o errexit
     if test ${rv} -eq 0 ; then alert "OK ${id}" ; fi
+    echo_log "\e[1m ============ FINISHED ============ \e[0m"
     while test ${rv} -ne 0 ; do
       alert_fail "ERR ${id}" | tee -a "${LOG}"
       echo_log "\e[1mrsync failed\e[0m"
