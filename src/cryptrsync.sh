@@ -16,8 +16,9 @@ set -o errexit
 # --log=<logfile>
 
 readonly ignore="\.~lock\..*#|\.sw?|~$|4913"
+# readonly rclone=/opt/rcb/usr/bin/rclone #`which rclone`
 readonly rclone=`which rclone`
-rcloneopts="-v --stats=20s"
+rcloneopts="--progress --stats=2s"
 rsyncopts="--archive --stats --delete --progress --human-readable --compress --update"
 readonly delay="5"
 readonly delayAfterFail="30"
