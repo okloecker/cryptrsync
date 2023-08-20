@@ -19,7 +19,7 @@ readonly ignore="\.~lock\..*#|\.sw?|~$|4913"
 # readonly rclone=/opt/rcb/usr/bin/rclone #`which rclone`
 readonly rclone=`which rclone`
 rcloneopts="--progress --stats=2s"
-rsyncopts="--archive --stats --delete --progress --human-readable --compress --update"
+rsyncopts="--archive --stats --delete --progress --human-readable --compress --update --size-only --itemize-changes"
 readonly delay="5"
 readonly delayAfterFail="30"
 readonly popupduration=5000
@@ -150,8 +150,9 @@ readchanges () {
 }
 
 startinotifyw() {
-  ( inotifywait -m "${plaindir}" -r -e close_write,create,delete --format %w%f & echo $! >&3 ) 3>$waitpidfile | egrep --line-buffered -v ${ignore} |
+  ( inotifywait -m "${plaindir}" -r -e close_write,create,delete --format %w%f & echo $! >&3 ) 3>$waitpidfile | grep --extended-regexp --line-buffered -v ${ignore} |
     while read f ; do readchanges "$f" ; done &
+  sleep 2 # make sure $waitpidfile is populated
   waitpid=$(<$waitpidfile)
   echo_log "PID of inotifywait ${waitpid}"
   echo_log "CHANGEDFILE ${changedfile}"
@@ -190,13 +191,17 @@ sync () {
     echo "cmd=${cmd}"
 
     set +o errexit
-    ${cmd} 2>&1 ; rv=$?
+    if [ $use_rclone = 1 ] ; then
+      ${cmd} 2>&1 ; rv=$?
+    else
+      ${cmd} | grep --extended-regexp '^<|^>|^c|^h|^\*' 2>&1 ; rv=$?
+    fi
     set -o errexit
     if test ${rv} -eq 0 ; then alert "OK ${id}" ; fi
     echo_log "\e[1m ============ FINISHED ============ \e[0m"
     while test ${rv} -ne 0 ; do
       alert_fail "ERR ${id}" | tee -a "${LOG}"
-      echo_log "\e[1mrsync failed\e[0m"
+      echo_log "\e[1mrsync failed with ${rv}\e[0m"
       visualsleep $delayAfterFail
       set +o errexit
       ${cmd} 2>&1 ; rv=$?
